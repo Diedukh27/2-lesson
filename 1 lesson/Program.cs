@@ -20,14 +20,30 @@ builder.Services.AddIdentity<UserEntity, RoleEntity>(options =>
     .AddEntityFrameworkStores<AppQrDbContext>()
     .AddDefaultTokenProviders();
 
-// Add services to the container.
+
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
+const string reactCorsPolicy = "ReactClient";
+
+var reactCorsOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? Array.Empty<string>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(reactCorsPolicy, policy =>
+    {
+        policy.WithOrigins(reactCorsOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
+
+app.UseCors(reactCorsPolicy);
 
 app.UseSwagger();
 app.UseSwaggerUI();
