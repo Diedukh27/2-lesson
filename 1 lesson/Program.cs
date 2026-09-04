@@ -2,6 +2,7 @@ using _1_lesson.Data;
 using _1_lesson.Data.Entites.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,8 @@ builder.Services.AddIdentity<UserEntity, RoleEntity>(options =>
 })
     .AddEntityFrameworkStores<AppQrDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IImageService, ImageOptimizationService>();
 
 
 builder.Services.AddSwaggerGen();
@@ -42,6 +45,23 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+try
+{
+    var myImage = builder.Configuration.GetRequiredSection("ImagesDir").Get<string>() ?? "myimages";
+    string path = Path.Combine(Directory.GetCurrentDirectory(), myImage);
+    Directory.CreateDirectory(path); //автоматично стоврить images
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(path),
+        RequestPath = $"/{myImage}"
+    });
+}
+catch (Exception ex)
+{
+    Console.WriteLine("ѕомилка запуску" + ex.Message);
+}
 
 app.UseCors(reactCorsPolicy);
 
